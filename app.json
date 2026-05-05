@@ -4,23 +4,23 @@
     "slug": "YourMusic",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/main-icon-purple.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true
     },
+    "splash": {
+      "image": "./assets/splashScreen.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#6600a1"
+    },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/main-icon-purple.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/splashScreen.png",
+        "backgroundColor": "#6600a1"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.YourMusic"
     },
     "web": {
       "favicon": "./assets/main-icon-purple.png"
