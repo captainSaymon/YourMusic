@@ -7,19 +7,18 @@ export default function App() {
   const [songs, setSongs] = useState([])
 
   useEffect(() => {
-      const setup = async () => {
-        await AudioController.init()
-        const localSongs = await MusicManager.scanLocalMusic()
-        setSongs(localSongs)
-      };
-      setup()
+      setupApp()
     }, [])
 
-  const handlePlayMusic = async () => {
-      if (songs.length > 0) {
-        await AudioController.loadPlaylist(songs)
-        await AudioController.play()
-      }
+  const setupApp = async () => {
+      await AudioController.init();
+      const allAudio = await MusicManager.scanLocalMusic()
+      setSongs(allAudio)
+    }
+
+  const handlePlay = async (song) => {
+      await AudioController.loadPlaylist([song])
+      await AudioController.play()
     }
 
 
@@ -31,12 +30,15 @@ export default function App() {
 
         <FlatList
           data={songs}
-          keyExtractor={(item) => item.path}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={{ padding: 10 }}>
-              <Text>{item.title || "Piosenka"}</Text>
-            </View>
-          )}
+              <TouchableOpacity onPress={() => handlePlay(item)} style={{ padding: 15, borderBottomWidth: 1, borderColor: '#eee' }}>
+                <Text style={{ fontWeight: '500' }}>{item.filename}</Text>
+                <Text style={{ color: 'gray', fontSize: 12 }}>
+                  {(item.duration / 60).toFixed(2)} min
+                </Text>
+              </TouchableOpacity>
+            )}
         />
       </View>
   );

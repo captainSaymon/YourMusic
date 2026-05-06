@@ -16,18 +16,18 @@ class AudioContoller {
             })
         }
         catch (e) {
-            console.log(e);
+            console.log(e)
         }
     }
 
-    async loadPlayList(tracks) {
-        const formattedTracks = tracks.map((t, index) => ({
-            id: index.toString(),
-            url: `file://${t.path}`,
-            title: t.title || "Nieznany utwór",
-            artist: t.author || "Nieznany artysta",
-            artwork: t.cover || null,
-        }))
+    async loadPlaylist(songs) {
+        const formattedTracks = songs.map(song => ({
+            id: song.id,
+            url: song.url,
+            title: song.title,
+            artist: song.artist,
+            duration: song.duration
+        }));
 
         await TrackPlayer.reset()
         await TrackPlayer.add(formattedTracks)

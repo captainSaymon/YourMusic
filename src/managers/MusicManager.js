@@ -1,22 +1,19 @@
-import ReactNativeBlobUtil from "react-native-blob-util"
-import MusicFiles from 'react-native-get-music-files'
-import { PermissionsAndroid, Platform } from "react-native"
+import * as MediaLibrary from 'expo-media-library'
 
 class MusicManager {
-    constructor() {
-        this.musicPath = `${ReactNativeBlobUtil.fs.dirs.DownloadDir}/Music`
-    }
-
     async requestPermissions() {
-        if (Platform.OS === 'android') {
-            const granted = await PermissionsAndroid.requestMultiple([
-                PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-                PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO
-            ])
+        const { status, canAskAgain } = await MediaLibrary.requestPermissionsAsync()
 
-            return granted['android.permission.READ_MEDIA_AUDIO'] === 'granted' || granted['android.permission.READ_EXTERNAL_STORAGE'] === 'granted'
+        if (status === 'granted') {
+            return true
         }
-        return true
+
+        if (canAskAgain) {
+            const { status: retryStatus } = await MediaLibrary.requestPermissionsAsync()
+            return retryStatus === 'granted'
+        }
+        
+        return false
     }
 
     async scanLocalMusic() {
@@ -27,13 +24,16 @@ class MusicManager {
         }
 
         try {
-            const tracks = await MusicFiles.getAll({
-                cover: true,
-                batchSize: 20,
-                batchNumber: 1,
-                minimumSongDuration: 10000,
-            })
-            return tracks.filter(track => track.path.includes('/Download/Music'))
+            const media = await MediaLibrary.getAssetsAsync({ mediaType: 'audio' })
+
+        return media.assets.map(asset => ({
+                id: asset.id,
+                url: asset.uri, 
+                title: asset.filename.replace(/\.[^/.]+$/, ""),
+                artist: "Nieznany wykonawca",
+                duration: asset.duration,
+                filename: asset.filename
+            }));
         }
         catch (error) {
             console.error("Błąd skanowania:", error)
@@ -42,4 +42,4 @@ class MusicManager {
     }
 }
 
-export default new MusicManager();
+export default new MusicManager()
