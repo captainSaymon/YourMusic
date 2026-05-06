@@ -29,11 +29,6 @@
     },
     "web": {
       "favicon": "./assets/main-icon-purple.png"
-    },
-    "plugins": [
-      "react-native-get-music-files",
-      "react-native-track-player",
-      "react-native-permissions"
-    ]
+    }
   }
 }
