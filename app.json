@@ -19,6 +19,11 @@
         "foregroundImage": "./assets/splashScreen.png",
         "backgroundColor": "#6600a1"
       },
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_AUDIO",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.YourMusic"
     },
@@ -26,6 +31,8 @@
       "favicon": "./assets/main-icon-purple.png"
     },
     "plugins": [
+      "react-native-get-music-files",
+      "react-native-track-player",
       "react-native-permissions"
     ]
   }
