@@ -15,6 +15,7 @@
       "backgroundColor": "#6600a1"
     },
     "android": {
+      "newArchEnabled": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/splashScreen.png",
         "backgroundColor": "#6600a1"
