@@ -1,5 +1,7 @@
-import { registerRootComponent } from 'expo';
+import { registerRootComponent } from 'expo'
+import App from './App'
+import TrackPlayer from 'react-native-track-player'
+import { playbackService } from './src/service/TrackPlayerService'
 
-import App from './App';
-
-registerRootComponent(App);
+registerRootComponent(App)
+TrackPlayer.registerPlaybackService(() => playbackService)
