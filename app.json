@@ -15,7 +15,7 @@
       "backgroundColor": "#6600a1"
     },
     "android": {
-      "newArchEnabled": false,
+      "newArchEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/splashScreen.png",
         "backgroundColor": "#6600a1"
@@ -30,6 +30,16 @@
     },
     "web": {
       "favicon": "./assets/main-icon-purple.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.21"
+          }
+        }
+      ]
+    ]
   }
 }
