@@ -1,45 +1,56 @@
-import TrackPlayer, { Capability } from "react-native-track-player"
+import { Audio } from 'expo-av'
 
-class AudioContoller {
-    async init() {
-        try {
-            await TrackPlayer.setupPlayer()
-            await TrackPlayer.updateOptions({
-                capabilities: [
-                    Capability.Play,
-                    Capability.Pause,
-                    Capability.SkipToNext,
-                    Capability.SkipToPrevious,
-                    Capability.Stop,
-                ],
-                compactCapabilities: [Capability.Play, Capability.Pause],   
-            })
-        }
-        catch (e) {
-            console.log(e)
-        }
+class AudioController {
+  constructor() {
+    this.sound = null
+    this.isPlaying = false
+  }
+
+  async init() {
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      staysActiveInBackground: true,
+      interruptionModeIOS: 1,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      interruptionModeAndroid: 1,
+      playThroughEarpieceAndroid: false,
+    });
+  }
+
+  async loadAndPlay(uri) {
+    if (this.sound) {
+      await this.sound.unloadAsync()
     }
 
-    async loadPlaylist(songs) {
-        const formattedTracks = songs.map(song => ({
-            id: song.id,
-            url: song.url,
-            title: song.title,
-            artist: song.artist,
-            duration: song.duration
-        }));
+    const { sound } = await Audio.Sound.createAsync(
+      { uri: uri },
+      { shouldPlay: true }
+    );
+    
+    this.sound = sound
+    this.isPlaying = true
 
-        await TrackPlayer.reset()
-        await TrackPlayer.add(formattedTracks)
-    }
+    
+    this.sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.didJustFinish) {
+        this.isPlaying = false
+        console.log("Utwór się skończył")
+      }
+    })
+  }
 
-    async play() {
-        await TrackPlayer.play()
-    }
+  async togglePlay() {
+    if (!this.sound) return
 
-    async pause() {
-        await TrackPlayer.pause()
+    if (this.isPlaying) {
+      await this.sound.pauseAsync()
     }
+    else {
+      await this.sound.playAsync()
+    }
+    this.isPlaying = !this.isPlaying
+  }
 }
 
-export default new AudioContoller()
+export default new AudioController()
