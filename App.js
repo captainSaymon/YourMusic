@@ -43,7 +43,6 @@ export default function App() {
 
   function handlePlayingPress() {
     AudioController.togglePlay()
-    setPlaying(prev => !prev)
   }
 
   return (

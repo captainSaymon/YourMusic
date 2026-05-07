@@ -6,6 +6,7 @@ class AudioController {
     this.isPlaying = false
     this.currentTime = 0
     this.onTimeUpdate = null
+    this.onPlayStateChange = null
   }
 
   async init() {
@@ -43,19 +44,26 @@ class AudioController {
       if (this.onTimeUpdate) {
         this.onTimeUpdate(this.currentTime);
       }
+
+      if (this.onPlayStateChange) {
+        this.onPlayStateChange(status.isPlaying)
+      }
     })
   }
 
   async togglePlay() {
     if (!this.sound) return
 
-    if (this.isPlaying) {
+    const status = await this.sound.getStatusAsync()
+
+    if (!status.isLoaded) return
+
+    if (status.isPlaying) {
       await this.sound.pauseAsync()
     }
     else {
       await this.sound.playAsync()
     }
-    this.isPlaying = !this.isPlaying
   }
 
   async getCurrentTime() {
