@@ -9,7 +9,7 @@ export default function App() {
   const [currentDuration, setCurrentDuration] = useState(null)
   const [currentTime, setCurrentTime] = useState(null)
   const [isPlaying, setPlaying] = useState(null)
-  const [currentIndex, setCurrentIndex] = useState(null)
+  const [currentIndex, setCurrentIndex] = useState(-1)
 
   useEffect(() => {
     const setup = async () => {
@@ -28,15 +28,16 @@ export default function App() {
     })
 
     AudioController.onSongFinish = () => {
-      playNext()
+      changePlayingSong()
     }
 
   }, [])
 
-  const playNext = async () => {
-    const nextIndex = currentIndex + 1
+  const changePlayingSong = async (direction = 1) => {
+    const nextIndex = currentIndex + direction
 
-    if (nextIndex >= songs.length) return
+    if (direction > 0 && nextIndex >= songs.length) return
+    else if (direction < 0 && nextIndex < 0) return
 
     const nextSong = songs[nextIndex]
 
@@ -69,6 +70,14 @@ export default function App() {
     AudioController.togglePlay()
   }
 
+  function handleNextPress() {
+    changePlayingSong()
+  }
+
+  function handlePrevPress() {
+    changePlayingSong(-1)
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>YourMusic</Text>
@@ -85,14 +94,24 @@ export default function App() {
 
       {currentSong && (
         <View style={styles.nowPlaying}>
-          <Text style={styles.nowPlayingText}>{currentSong}</Text>
+          <View style={styles.nowPlayingContainer}>
+            <Text style={styles.nowPlayingText}>{currentSong}</Text>
+          </View>
           <View style={styles.nowPlayingTimeContainer}>
             <Text style={styles.nowPlayingTime}>{convertToTime(currentTime)}</Text>
             <Text style={styles.nowPlayingDuration}>{currentDuration}</Text>
           </View>
-          <TouchableOpacity onPress={handlePlayingPress}>
-            <Text style={styles.playBtn}>{isPlaying ? 'STOP' : 'PLAY'}</Text>
-          </TouchableOpacity>
+          <View style={styles.containerButtons}>
+            <TouchableOpacity onPress={handlePrevPress}>
+              <Text style={styles.prevBtn}>PREV</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handlePlayingPress}>
+              <Text style={styles.playBtn}>{isPlaying ? 'STOP' : 'PLAY'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleNextPress}>
+              <Text style={styles.nextBtn}>NEXT</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -142,10 +161,14 @@ const styles = StyleSheet.create({
     maxHeight: 130,
     borderRadius: 20
   },
+  nowPlayingContainer: {
+    width: '100%',
+    height: 40, 
+    justifyContent: 'center', 
+  },
   nowPlayingText: {
     fontWeight: 'bold',
-    width: '100%',
-    marginBottom: 10
+    fontSize: 15
   },
   nowPlayingTimeContainer: {
     flex: 1,
@@ -157,8 +180,24 @@ const styles = StyleSheet.create({
   },
   nowPlayingDuration: {
   },
+
+
+  containerButtons: {
+    flex: 1,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-around'
+  },
   playBtn: {
     color: 'blue',
     fontSize: 18
+  },
+  nextBtn: {
+    color: 'blue',
+    fontSize: 15
+  },
+  prevBtn: {
+    color: 'blue',
+    fontSize: 15
   }
 });
