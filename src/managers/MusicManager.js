@@ -12,7 +12,7 @@ class MusicManager {
     return media.assets.map(asset => ({
       id: asset.id,
       uri: asset.uri,
-      title: asset.filename,
+      title: asset.filename.replace(".mp3", ""),
       duration: asset.duration
     }))
   }
