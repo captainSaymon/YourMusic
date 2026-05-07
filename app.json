@@ -4,20 +4,21 @@
     "slug": "YourMusic",
     "version": "1.0.0",
     "orientation": "portrait",
+    "ico": "./assets/main-icon-white.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "splash": {
-      "image": "./assets/splashScreen.png",
+      "image": "./assets/main-icon-white.png",
       "resizeMode": "cover",
       "backgroundColor": "#6600a1"
     },
     "android": {
       "newArchEnabled": true,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/splashScreen.png",
+        "foregroundImage": "./assets/main-icon-white.png",
         "backgroundColor": "#6600a1"
       },
       "permissions": [
