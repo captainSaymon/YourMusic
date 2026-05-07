@@ -6,6 +6,8 @@ import AudioController from './src/controllers/AudioController'
 export default function App() {
   const [songs, setSongs] = useState([])
   const [currentSong, setCurrentSong] = useState(null)
+  const [currentDuration, setCurrentDuration] = useState(null)
+  const [currentTime, setCurrentTime] = useState(null)
   const [isPlaying, setPlaying] = useState(null)
 
   useEffect(() => {
@@ -15,10 +17,27 @@ export default function App() {
       setSongs(music)
     };
     setup()
+
+    AudioController.setTimeListener((time) => {
+      setCurrentTime(time);
+    });
+
   }, [])
 
+  const convertToTime = (timeInSeconds) => {
+    if (!timeInSeconds || isNaN(timeInSeconds)) return '0:00'
+    
+    const minutes = Math.floor(timeInSeconds / 60)
+    const seconds = Math.floor(timeInSeconds % 60)
+    const displaySeconds = seconds < 10 ? `0${seconds}` : seconds
+    
+    return `${minutes}:${displaySeconds}`
+  };
+
   const handlePress = async (song) => {
+    setPlaying(false)
     setCurrentSong(song.title)
+    setCurrentDuration(convertToTime(song.duration))
     await AudioController.loadAndPlay(song.uri)
   };
 
@@ -36,7 +55,7 @@ export default function App() {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.item} onPress={() => handlePress(item)}>
             <Text style={styles.musicTitles}>{item.title}</Text>
-            <Text style={styles.duration}>{String((item.duration / 60).toFixed(2)).replace('.', ':')}</Text>
+            <Text style={styles.duration}>{convertToTime(item.duration)}</Text>
           </TouchableOpacity>
         )}
       />
@@ -44,6 +63,10 @@ export default function App() {
       {currentSong && (
         <View style={styles.nowPlaying}>
           <Text style={styles.nowPlayingText}>{currentSong}</Text>
+          <View style={styles.nowPlayingTimeContainer}>
+            <Text style={styles.nowPlayingTime}>{convertToTime(currentTime)}</Text>
+            <Text style={styles.nowPlayingDuration}>{currentDuration}</Text>
+          </View>
           <TouchableOpacity onPress={handlePlayingPress}>
             <Text style={styles.playBtn}>{isPlaying ? 'PLAY' : 'STOP'}</Text>
           </TouchableOpacity>
@@ -86,17 +109,30 @@ const styles = StyleSheet.create({
   duration: {
     color: '#888'
   },
+
+
   nowPlaying: {
     flex: 1,
     padding: 20,
     backgroundColor: '#e0e0e0',
     alignItems: 'center',
-    maxHeight: 100,
+    maxHeight: 130,
     borderRadius: 20
   },
   nowPlayingText: {
     fontWeight: 'bold',
+    width: '100%',
     marginBottom: 10
+  },
+  nowPlayingTimeContainer: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+  },
+  nowPlayingTime: {
+  },
+  nowPlayingDuration: {
   },
   playBtn: {
     color: 'blue',
