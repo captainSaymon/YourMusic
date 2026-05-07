@@ -4,6 +4,8 @@ class AudioController {
   constructor() {
     this.sound = null
     this.isPlaying = false
+    this.currentTime = 0
+    this.onTimeUpdate = null
   }
 
   async init() {
@@ -33,9 +35,13 @@ class AudioController {
 
     
     this.sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) {
-        this.isPlaying = false
-        console.log("Utwór się skończył")
+      if (!status.isLoaded) return
+
+      this.isPlaying = status.isPlaying
+      this.currentTime = status.positionMillis / 1000
+
+      if (this.onTimeUpdate) {
+        this.onTimeUpdate(this.currentTime);
       }
     })
   }
@@ -50,6 +56,14 @@ class AudioController {
       await this.sound.playAsync()
     }
     this.isPlaying = !this.isPlaying
+  }
+
+  async getCurrentTime() {
+    return this.currentTime || 0;
+  }
+
+  setTimeListener(callback) {
+    this.onTimeUpdate = callback;
   }
 }
 
