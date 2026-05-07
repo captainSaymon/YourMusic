@@ -9,20 +9,43 @@ export default function App() {
   const [currentDuration, setCurrentDuration] = useState(null)
   const [currentTime, setCurrentTime] = useState(null)
   const [isPlaying, setPlaying] = useState(null)
+  const [currentIndex, setCurrentIndex] = useState(null)
 
   useEffect(() => {
     const setup = async () => {
       await AudioController.init()
       const music = await MusicManager.scanLocalMusic()
       setSongs(music)
-    };
+    }
     setup()
 
+    AudioController.onPlayStateChange = (state) => {
+      setPlaying(state)
+    }
+
     AudioController.setTimeListener((time) => {
-      setCurrentTime(time);
-    });
+      setCurrentTime(time)
+    })
+
+    AudioController.onSongFinish = () => {
+      playNext()
+    }
 
   }, [])
+
+  const playNext = async () => {
+    const nextIndex = currentIndex + 1
+
+    if (nextIndex >= songs.length) return
+
+    const nextSong = songs[nextIndex]
+
+    setCurrentIndex(nextIndex)
+    setCurrentSong(nextSong.title)
+    setCurrentDuration(convertToTime(nextSong.duration))
+
+    await AudioController.loadAndPlay(nextSong.uri)
+  }
 
   const convertToTime = (timeInSeconds) => {
     if (!timeInSeconds || isNaN(timeInSeconds)) return '0:00'
@@ -34,8 +57,9 @@ export default function App() {
     return `${minutes}:${displaySeconds}`
   };
 
-  const handlePress = async (song) => {
+  const handlePress = async (song, index) => {
     setPlaying(false)
+    setCurrentIndex(index)
     setCurrentSong(song.title)
     setCurrentDuration(convertToTime(song.duration))
     await AudioController.loadAndPlay(song.uri)
@@ -51,8 +75,8 @@ export default function App() {
       <FlatList
         data={songs}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.item} onPress={() => handlePress(item)}>
+        renderItem={({ item, index }) => (
+          <TouchableOpacity style={styles.item} onPress={() => handlePress(item, index)}>
             <Text style={styles.musicTitles}>{item.title}</Text>
             <Text style={styles.duration}>{convertToTime(item.duration)}</Text>
           </TouchableOpacity>
@@ -67,7 +91,7 @@ export default function App() {
             <Text style={styles.nowPlayingDuration}>{currentDuration}</Text>
           </View>
           <TouchableOpacity onPress={handlePlayingPress}>
-            <Text style={styles.playBtn}>{isPlaying ? 'PLAY' : 'STOP'}</Text>
+            <Text style={styles.playBtn}>{isPlaying ? 'STOP' : 'PLAY'}</Text>
           </TouchableOpacity>
         </View>
       )}

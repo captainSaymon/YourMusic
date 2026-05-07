@@ -7,6 +7,7 @@ class AudioController {
     this.currentTime = 0
     this.onTimeUpdate = null
     this.onPlayStateChange = null
+    this.onSongFinish = null
   }
 
   async init() {
@@ -47,6 +48,12 @@ class AudioController {
 
       if (this.onPlayStateChange) {
         this.onPlayStateChange(status.isPlaying)
+      }
+
+      if (status.didJustFinish) {
+        if (this.onSongFinish) {
+          this.onSongFinish()
+        }
       }
     })
   }
