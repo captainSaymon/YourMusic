@@ -9,7 +9,7 @@ export default function App() {
   const [currentDuration, setCurrentDuration] = useState(null)
   const [currentTime, setCurrentTime] = useState(null)
   const [isPlaying, setPlaying] = useState(null)
-  const [currentIndex, setCurrentIndex] = useState(-1)
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     const setup = async () => {
@@ -17,6 +17,7 @@ export default function App() {
       const music = await MusicManager.scanLocalMusic()
       setSongs(music)
     }
+
     setup()
 
     AudioController.onPlayStateChange = (state) => {
@@ -28,16 +29,28 @@ export default function App() {
     })
 
     AudioController.onSongFinish = () => {
-      changePlayingSong()
+      setCurrentIndex(prev => {
+        const nextIndex = prev + 1
+
+        if (nextIndex >= songs.length) return prev
+
+        const nextSong = songs[nextIndex]
+
+        AudioController.loadAndPlay(nextSong.uri)
+
+        setCurrentSong(nextSong.title)
+        setCurrentDuration(convertToTime(nextSong.duration))
+
+        return nextIndex
+      })
     }
 
-  }, [])
+  }, [songs])
 
   const changePlayingSong = async (direction = 1) => {
     const nextIndex = currentIndex + direction
 
-    if (direction > 0 && nextIndex >= songs.length) return
-    else if (direction < 0 && nextIndex < 0) return
+    if (nextIndex < 0 || nextIndex >= songs.length) return
 
     const nextSong = songs[nextIndex]
 
@@ -50,28 +63,29 @@ export default function App() {
 
   const convertToTime = (timeInSeconds) => {
     if (!timeInSeconds || isNaN(timeInSeconds)) return '0:00'
-    
+
     const minutes = Math.floor(timeInSeconds / 60)
     const seconds = Math.floor(timeInSeconds % 60)
     const displaySeconds = seconds < 10 ? `0${seconds}` : seconds
-    
+
     return `${minutes}:${displaySeconds}`
-  };
+  }
 
   const handlePress = async (song, index) => {
     setPlaying(false)
     setCurrentIndex(index)
     setCurrentSong(song.title)
     setCurrentDuration(convertToTime(song.duration))
+
     await AudioController.loadAndPlay(song.uri)
-  };
+  }
 
   function handlePlayingPress() {
     AudioController.togglePlay()
   }
 
   function handleNextPress() {
-    changePlayingSong()
+    changePlayingSong(1)
   }
 
   function handlePrevPress() {
@@ -81,6 +95,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>YourMusic</Text>
+
       <FlatList
         data={songs}
         keyExtractor={(item) => item.id}
@@ -97,17 +112,21 @@ export default function App() {
           <View style={styles.nowPlayingContainer}>
             <Text style={styles.nowPlayingText}>{currentSong}</Text>
           </View>
+
           <View style={styles.nowPlayingTimeContainer}>
             <Text style={styles.nowPlayingTime}>{convertToTime(currentTime)}</Text>
             <Text style={styles.nowPlayingDuration}>{currentDuration}</Text>
           </View>
+
           <View style={styles.containerButtons}>
             <TouchableOpacity onPress={handlePrevPress}>
               <Text style={styles.prevBtn}>PREV</Text>
             </TouchableOpacity>
+
             <TouchableOpacity onPress={handlePlayingPress}>
               <Text style={styles.playBtn}>{isPlaying ? 'STOP' : 'PLAY'}</Text>
             </TouchableOpacity>
+
             <TouchableOpacity onPress={handleNextPress}>
               <Text style={styles.nextBtn}>NEXT</Text>
             </TouchableOpacity>
@@ -115,7 +134,7 @@ export default function App() {
         </View>
       )}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -151,8 +170,6 @@ const styles = StyleSheet.create({
   duration: {
     color: '#888'
   },
-
-
   nowPlaying: {
     flex: 1,
     padding: 20,
@@ -200,4 +217,4 @@ const styles = StyleSheet.create({
     color: 'blue',
     fontSize: 15
   }
-});
+})
