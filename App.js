@@ -12,6 +12,7 @@ export default function App() {
   const [isPlaying, setPlaying] = useState(false) 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [albums, setAlbums] = useState([])
+  const [selectedAlbum, setSelectedAlbum] = useState(null)
 
   const allSongs = useMemo(() => {
     return albums.flatMap(album => album.songs)
@@ -22,7 +23,7 @@ export default function App() {
 
     const minutes = Math.floor(timeInSeconds / 60)
     const seconds = Math.floor(timeInSeconds % 60)
-    
+
     const displaySeconds = seconds < 10 ? `0${seconds}` : seconds
     return `${minutes}:${displaySeconds}`
   }
@@ -94,6 +95,15 @@ export default function App() {
     changePlayingSong(-1)
   }
 
+  const toggleAlbum = (albumName) => {
+  if (selectedAlbum === albumName) {
+    setSelectedAlbum(null)
+  }
+  else {
+    setSelectedAlbum(albumName)
+  }
+}
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>YourMusic</Text>
@@ -106,24 +116,30 @@ export default function App() {
       <FlatList
         data={albums}
         keyExtractor={(item) => item.album}
-        renderItem={({ item }) => (
-          <View style={styles.albumContainer}>
-            <Text style={styles.albumTitle}>{item.album}</Text>
-            {item.songs.map((song) => {
-              const globalIndex = allSongs.findIndex(s => s.id === song.id)
-              return (
-                <TouchableOpacity
-                  key={song.id}
-                  style={styles.item}
-                  onPress={() => handlePress(song, globalIndex)}
-                >
-                  <Text style={styles.musicTitles}>{song.title}</Text>
-                  <Text style={styles.duration}>{convertToTime(song.duration)}</Text>
-                </TouchableOpacity>
-              )
-            })}
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const isExpanded = selectedAlbum === item.album
+
+          return (
+            <View style={styles.albumContainer}>
+              <TouchableOpacity onPress={() => toggleAlbum(item.album)}>
+                <Text style={styles.albumTitle}>{item.album}</Text>
+              </TouchableOpacity>
+
+              {isExpanded && item.songs.map((song) => {
+                const globalIndex = allSongs.findIndex(s => s.id === song.id)
+                return (
+                  <TouchableOpacity
+                    key={song.id}
+                    style={styles.item}
+                    onPress={() => handlePress(song, globalIndex)}>
+                    <Text style={styles.musicTitles}>{song.title}</Text>
+                    <Text style={styles.duration}>{convertToTime(song.duration)}</Text>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          )
+        }}
       />
 
       {currentSong && (
