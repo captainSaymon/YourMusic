@@ -5,6 +5,7 @@ import AudioController from './src/controllers/AudioController'
 
 export default function App() {
   const [songs, setSongs] = useState([])
+  const [info, setInfo] = useState([null])
   const [currentSong, setCurrentSong] = useState(null)
   const [currentDuration, setCurrentDuration] = useState(null)
   const [currentTime, setCurrentTime] = useState(null)
@@ -15,7 +16,12 @@ export default function App() {
     const setup = async () => {
       await AudioController.init()
       const music = await MusicManager.scanLocalMusic()
-      setSongs(music)
+      if(music == false) {
+        setInfo("Brak folderu Music")
+      }
+      else {
+        setSongs(music)
+      }
     }
 
     setup()
@@ -95,6 +101,11 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>YourMusic</Text>
+      {info && (
+        <View>
+          <Text style={styles.infoText}>{info}</Text>
+        </View>
+      )}
 
       <FlatList
         data={songs}
@@ -145,6 +156,11 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 50,
     backgroundColor: '#f5f5f5'
+  },
+  infoText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center'
   },
   header: {
     fontSize: 36,
