@@ -8,6 +8,8 @@ class AudioController {
     this.onTimeUpdate = null
     this.onPlayStateChange = null
     this.onSongFinish = null
+    this.loading = false
+    this.sessionId = 0
   }
 
   async init() {
@@ -22,41 +24,48 @@ class AudioController {
     });
   }
 
-  async loadAndPlay(uri) {
-    if (this.sound) {
+async loadAndPlay(uri) {
+  const session = ++this.sessionId
+  this.loading = true
+
+  if (this.sound) {
+    try {
+      await this.sound.stopAsync()
       await this.sound.unloadAsync()
-    }
-
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: uri },
-      { shouldPlay: true }
-    );
-    
-    this.sound = sound
-    this.isPlaying = true
-
-    
-    this.sound.setOnPlaybackStatusUpdate((status) => {
-      if (!status.isLoaded) return
-
-      this.isPlaying = status.isPlaying
-      this.currentTime = status.positionMillis / 1000
-
-      if (this.onTimeUpdate) {
-        this.onTimeUpdate(this.currentTime);
-      }
-
-      if (this.onPlayStateChange) {
-        this.onPlayStateChange(status.isPlaying)
-      }
-
-      if (status.didJustFinish) {
-        if (this.onSongFinish) {
-          this.onSongFinish()
-        }
-      }
-    })
+    } catch (e) {}
+    this.sound = null
   }
+
+  const { sound } = await Audio.Sound.createAsync(
+    { uri },
+    { shouldPlay: true }
+  )
+
+  if (session !== this.sessionId) {
+    try {
+      await sound.unloadAsync()
+    } catch (e) {}
+    return
+  }
+
+  this.sound = sound
+  this.isPlaying = true
+  this.loading = false
+
+  this.sound.setOnPlaybackStatusUpdate((status) => {
+    if (!status.isLoaded) return
+
+    this.isPlaying = status.isPlaying
+    this.currentTime = status.positionMillis / 1000
+
+    this.onTimeUpdate?.(this.currentTime)
+    this.onPlayStateChange?.(status.isPlaying)
+
+    if (status.didJustFinish) {
+      this.onSongFinish?.()
+    }
+  })
+}
 
   async togglePlay() {
     if (!this.sound) return
