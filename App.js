@@ -1,29 +1,44 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native'
 import MusicManager from './src/managers/MusicManager'
 import AudioController from './src/controllers/AudioController'
 
 export default function App() {
   const [songs, setSongs] = useState([])
-  const [info, setInfo] = useState([null])
+  const [info, setInfo] = useState(null)
   const [currentSong, setCurrentSong] = useState(null)
   const [currentDuration, setCurrentDuration] = useState(null)
-  const [currentTime, setCurrentTime] = useState(null)
-  const [isPlaying, setPlaying] = useState(null)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [isPlaying, setPlaying] = useState(false) 
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [albums, setAlbums] = useState([])
+
+  const allSongs = useMemo(() => {
+    return albums.flatMap(album => album.songs)
+  }, [albums])
+
+  const convertToTime = (timeInSeconds) => {
+    if (!timeInSeconds || isNaN(timeInSeconds)) return '0:00'
+
+    const minutes = Math.floor(timeInSeconds / 60)
+    const seconds = Math.floor(timeInSeconds % 60)
+    
+    const displaySeconds = seconds < 10 ? `0${seconds}` : seconds
+    return `${minutes}:${displaySeconds}`
+  }
 
   useEffect(() => {
     const setup = async () => {
       await AudioController.init()
       const music = await MusicManager.scanLocalMusic()
-      if(music == false) {
+
+      if (music == false) {
         setInfo("Brak folderu Music")
-      }
-      else {
+      } else {
+        setAlbums(music)
         setSongs(music)
       }
     }
-
     setup()
 
     AudioController.onPlayStateChange = (state) => {
@@ -33,56 +48,37 @@ export default function App() {
     AudioController.setTimeListener((time) => {
       setCurrentTime(time)
     })
+  }, [])
 
-    AudioController.onSongFinish = () => {
-      setCurrentIndex(prev => {
-        const nextIndex = prev + 1
-
-        if (nextIndex >= songs.length) return prev
-
-        const nextSong = songs[nextIndex]
-
-        AudioController.loadAndPlay(nextSong.uri)
-
+  useEffect(() => {
+    AudioController.onSongFinish = async () => {
+      const nextIndex = currentIndex + 1
+      if (nextIndex < allSongs.length) {
+        const nextSong = allSongs[nextIndex]
+        setCurrentIndex(nextIndex)
         setCurrentSong(nextSong.title)
         setCurrentDuration(convertToTime(nextSong.duration))
-
-        return nextIndex
-      })
+        await AudioController.loadAndPlay(nextSong.uri)
+      }
     }
-
-  }, [songs])
+  }, [allSongs, currentIndex])
 
   const changePlayingSong = async (direction = 1) => {
     const nextIndex = currentIndex + direction
+    if (nextIndex < 0 || nextIndex >= allSongs.length) return
 
-    if (nextIndex < 0 || nextIndex >= songs.length) return
-
-    const nextSong = songs[nextIndex]
-
+    const nextSong = allSongs[nextIndex]
     setCurrentIndex(nextIndex)
     setCurrentSong(nextSong.title)
     setCurrentDuration(convertToTime(nextSong.duration))
-
     await AudioController.loadAndPlay(nextSong.uri)
   }
 
-  const convertToTime = (timeInSeconds) => {
-    if (!timeInSeconds || isNaN(timeInSeconds)) return '0:00'
-
-    const minutes = Math.floor(timeInSeconds / 60)
-    const seconds = Math.floor(timeInSeconds % 60)
-    const displaySeconds = seconds < 10 ? `0${seconds}` : seconds
-
-    return `${minutes}:${displaySeconds}`
-  }
-
   const handlePress = async (song, index) => {
-    setPlaying(false)
+    setPlaying(true)
     setCurrentIndex(index)
     setCurrentSong(song.title)
     setCurrentDuration(convertToTime(song.duration))
-
     await AudioController.loadAndPlay(song.uri)
   }
 
@@ -108,13 +104,25 @@ export default function App() {
       )}
 
       <FlatList
-        data={songs}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity style={styles.item} onPress={() => handlePress(item, index)}>
-            <Text style={styles.musicTitles}>{item.title}</Text>
-            <Text style={styles.duration}>{convertToTime(item.duration)}</Text>
-          </TouchableOpacity>
+        data={albums}
+        keyExtractor={(item) => item.album}
+        renderItem={({ item }) => (
+          <View style={styles.albumContainer}>
+            <Text style={styles.albumTitle}>{item.album}</Text>
+            {item.songs.map((song) => {
+              const globalIndex = allSongs.findIndex(s => s.id === song.id)
+              return (
+                <TouchableOpacity
+                  key={song.id}
+                  style={styles.item}
+                  onPress={() => handlePress(song, globalIndex)}
+                >
+                  <Text style={styles.musicTitles}>{song.title}</Text>
+                  <Text style={styles.duration}>{convertToTime(song.duration)}</Text>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
         )}
       />
 
@@ -168,6 +176,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20
   },
+  albumContainer: {
+    marginBottom: 20
+  },
+  albumTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    marginTop: 10
+  },
   item: {
     padding: 20,
     backgroundColor: '#fff',
@@ -187,7 +204,6 @@ const styles = StyleSheet.create({
     color: '#888'
   },
   nowPlaying: {
-    flex: 1,
     padding: 20,
     backgroundColor: '#e0e0e0',
     alignItems: 'center',
@@ -204,19 +220,14 @@ const styles = StyleSheet.create({
     fontSize: 15
   },
   nowPlayingTimeContainer: {
-    flex: 1,
     width: '100%',
     justifyContent: 'space-between',
     flexDirection: 'row',
+    marginBottom: 10
   },
-  nowPlayingTime: {
-  },
-  nowPlayingDuration: {
-  },
-
-
+  nowPlayingTime: {},
+  nowPlayingDuration: {},
   containerButtons: {
-    flex: 1,
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around'
